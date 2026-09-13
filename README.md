@@ -304,6 +304,14 @@ rules. Every item they removed was one where the gold gave itself
 away, and loosening them to reach a round number would have bought the
 number with the cues.
 
+**This task does not rank models.** Across nine models it spans 2.3
+points, 97.0 to 99.2, and the weakest model scores 96.99 — see
+[First results](#first-results). Choosing which of six short passages
+holds a fact turns out to be far easier than knowing the fact, and the
+negatives being hard *lexically* does not change that. Read it as a
+check that a retrieval pipeline is not broken, not as a measurement of
+one.
+
 ```bash
 yoxla tasks
 ```
@@ -311,6 +319,82 @@ yoxla tasks
 Each task score is normalized to `[0, 100]`, and the block score is
 the **macro average over tasks** — not over examples, so the 200 QA
 items do not outweigh the 50 intent items.
+
+## First results
+
+Nine models, 13 September 2026, every task of all four blocks.
+Temperature 0, reasoning disabled, prompts frozen and hashed, and zero
+generation errors in every run — so the scores are comparable with one
+another.
+
+| Model | Understanding | Language | Knowledge | RAG | YOXLA |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `google/gemini-3.1-flash-lite` | 92.48 | 99.50 | 50.67 | 97.06 | **84.93** |
+| `openai/gpt-5.4-mini` | 86.68 | 97.00 | 39.33 | 97.75 | **80.19** |
+| `google/gemma-4-31b-it` | 91.56 | 95.75 | 26.00 | 97.75 | **77.76** |
+| `deepseek/deepseek-v4.1-flash` | 89.98 | 77.75 | 44.67 | 97.37 | **77.44** |
+| `qwen/qwen3.6-27b` | 92.91 | 94.50 | 18.67 | 88.06 | **73.53** |
+| `qwen/qwen3.8-27b` | 91.24 | 84.50 | 18.00 | 97.25 | **72.75** |
+| `google/gemma-4-26b-a4b-it` | 88.01 | 90.25 | 14.67 | 97.00 | **72.48** |
+| `openai/gpt-4o-mini` | 84.82 | 67.00 | 21.33 | 98.69 | **67.96** |
+| `qwen/qwen3.5-9b` | 87.11 | 79.00 | 10.67 | 94.75 | **67.88** |
+
+### Which tasks rank models, and which do not
+
+The spread across those nine models is the benchmark measuring itself.
+
+| Task | Lowest | Highest | Range |
+| --- | ---: | ---: | ---: |
+| `az_tr_interference_v1` | 45.5 | 99.5 | **54.0** |
+| `knowledge_choice_v1` | 10.7 | 50.7 | **40.0** |
+| `rag_verification_v1` | 76.9 | 98.1 | 21.2 |
+| `qa_abstention_v1` | 72.1 | 92.7 | 20.6 |
+| `nli_v1` | 76.0 | 93.0 | 17.0 |
+| `minimal_pairs_v1` | 84.5 | 99.5 | 15.0 |
+| `extractive_qa_v1` | 79.3 | 91.6 | 12.2 |
+| `intent_v1` | 90.0 | 100.0 | 10.0 |
+| `sentiment_v1` | 92.0 | 98.0 | 6.0 |
+| `sts_v1` | 87.4 | 91.5 | 4.1 |
+| `rag_selection_v1` | 97.0 | 99.2 | 2.3 |
+
+**Four tasks no longer rank anything.** Passage selection spans 2.3
+points across all nine models, similarity 4.1, sentiment 6.0, intent
+10.0. Their build-time gates proved those sets cannot be solved
+*without reading* them; that is not the same as being hard to solve
+*while* reading, and only real models show the difference. Keep them as
+a check that nothing is broken, not as a measurement.
+
+### A model answered in Turkish without being asked
+
+On `rag_verification_v1` a model must reply `YOXDUR` when the passage
+says nothing about the claim. `qwen/qwen3.6-27b` wrote `YOKDUR` — the
+Turkish spelling — on 30 of those 40 items.
+
+It had identified the silence correctly and named it in the wrong
+language. Strict parsing counted those as unusable output, which is why
+its RAG block reads 88.06 instead of about 97; a lenient parser would
+have hidden a language failure behind a good score.
+
+That is also a measurement this benchmark is not supposed to be able to
+make. `az_tr_interference_v1` tests whether a model *recognises* a
+Turkish word, and this model scores 96.00 there while *writing* one
+three times out of four. The recognition-production gap
+[documented below](#what-the-benchmark-does-not-measure) is real, and
+it showed up by accident, because this task's label happens to be a
+word the two languages spell differently.
+
+### The widest spread is lexical, not grammatical
+
+`gpt-4o-mini` scores 45.5 on `az_tr_interference_v1` — below chance on a
+two-way choice, with no invalid output to explain it. It does not guess;
+it prefers the Turkish sentence. The same model scores 88.5 on
+grammaticality, so it has the rules and not the vocabulary: it is
+reading Azerbaijani through the larger neighbouring language.
+
+Knowledge is the other discriminator, and the only block where the
+ordering changes substantially. Models in the nineties on comprehension
+fall to between 10.67 and 50.67 on facts about Azerbaijan, against a
+chance of 5.
 
 ## Span answers
 
@@ -578,8 +662,9 @@ there is no `v2` anywhere. No task is retired.
 
 Implemented: inference (API, local Transformers, bitsandbytes/Unsloth,
 GGUF via llama.cpp), the Understanding, Language, Knowledge and RAG
-blocks, deterministic evaluators, scoring, run artifacts, resume and
-validation.
+blocks, deterministic evaluators, scoring, run artifacts, resume,
+validation and parallel execution. Nine models have been measured —
+see [First results](#first-results).
 
 Not implemented yet: RAG extraction, Language Under Load, and the
 leaderboard.
