@@ -1,0 +1,3 @@
+{"id":"smoke_001","messages":[{"role":"user","content":"Azərbaycanın paytaxtı hansıdır? Yalnız şəhərin adını yaz."}]}
+{"id":"smoke_002","messages":[{"role":"user","content":"2 + 2 neçə edir? Yalnız cavabı yaz."}]}
+{"id":"smoke_003","messages":[{"role":"user","content":"Azərbaycan dilində 'kitab' sözünün cəmini yaz."}]}

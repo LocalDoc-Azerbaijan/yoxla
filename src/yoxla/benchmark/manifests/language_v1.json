@@ -1,0 +1,21 @@
+{
+  "block": "language",
+  "benchmark_version": "language_v1",
+  "dataset_revision": null,
+  "tasks": [
+    {
+      "task_id": "minimal_pairs_v1",
+      "rows": 200,
+      "fingerprint": "sha256:4e9b0fc59b61aac8ac49600aa14b2d1316fdfa6cc8d48ccbdf4a623f72d3bcfa",
+      "prompt_version": 1,
+      "system_prompt_hash": "e14fb9cd68d6728ceda234d6b32e0d27c0dceb62e88bbf667e82a0c48f1fe0be"
+    },
+    {
+      "task_id": "az_tr_interference_v1",
+      "rows": 200,
+      "fingerprint": "sha256:7fd737465b02940423a41c57cdfd80b5241eda363b07d4a8802b4a2e8a29c376",
+      "prompt_version": 1,
+      "system_prompt_hash": "00d7f5093437325bc6e00c5b38ca4d4d61199b6515b413f846beb2175d66d074"
+    }
+  ]
+}

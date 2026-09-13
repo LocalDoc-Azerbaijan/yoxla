@@ -1,0 +1,14 @@
+{
+  "block": "knowledge",
+  "benchmark_version": "knowledge_v1",
+  "dataset_revision": null,
+  "tasks": [
+    {
+      "task_id": "knowledge_choice_v1",
+      "rows": 150,
+      "fingerprint": "sha256:036af28254e2a1db6845e20df6d94df8314f624cc9502bc469901cc406ba0db5",
+      "prompt_version": 1,
+      "system_prompt_hash": "871f0b903cc16a570199cbd857bb55e62041d213aa32746fa8f6954137819cf5"
+    }
+  ]
+}

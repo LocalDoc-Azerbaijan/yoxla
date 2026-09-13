@@ -1,0 +1,38 @@
+providers:
+
+  openrouter:
+    backend: openai_compatible
+    base_url: https://openrouter.ai/api/v1
+    api_key_env: OPENROUTER_API_KEY
+    # OpenRouter enables reasoning by default for models that support
+    # it, and some default to a high effort that consumes the whole
+    # output budget. The benchmark runs with thinking disabled, so it
+    # must be switched off explicitly rather than left to the gateway.
+    thinking_control: reasoning
+
+  google:
+    backend: openai_compatible
+    base_url: https://generativelanguage.googleapis.com/v1beta/openai/
+    api_key_env: GEMINI_API_KEY
+
+  openai:
+    backend: openai_compatible
+    base_url: https://api.openai.com/v1
+    api_key_env: OPENAI_API_KEY
+
+  vllm:
+    backend: openai_compatible
+    base_url: http://127.0.0.1:8000/v1
+    api_key: dummy
+
+  llamacpp:
+    backend: openai_compatible
+    base_url: http://127.0.0.1:8080/v1
+    api_key: dummy
+    thinking_control: chat_template_kwargs
+
+  transformers:
+    backend: transformers
+    device_map: auto
+    dtype: auto
+    trust_remote_code: false

@@ -1,0 +1,49 @@
+{
+  "block": "understanding",
+  "benchmark_version": "understanding_v1",
+  "dataset_revision": null,
+  "tasks": [
+    {
+      "task_id": "extractive_qa_v1",
+      "rows": 200,
+      "fingerprint": "sha256:31d0c6fc3430963996c4edd866b94daf2e187e3955059ddf88959c7f3a378ced",
+      "prompt_version": 1,
+      "system_prompt_hash": "e5383e2441a55a1f2444b1bc9494d79b1b79504e7e500c4ab2de42475a681668"
+    },
+    {
+      "task_id": "qa_abstention_v1",
+      "rows": 100,
+      "fingerprint": "sha256:ecc18b50f17fc7a014b2c8ecca722a3f9536e776b84d79406b80fce0bd817904",
+      "prompt_version": 1,
+      "system_prompt_hash": "b06d170e7c8e0be6fa823d71dbd2709b3d6c51d21620413f9c0f7248c70448fd"
+    },
+    {
+      "task_id": "nli_v1",
+      "rows": 100,
+      "fingerprint": "sha256:8b8ca6983764ef87c9d7456d428dec7934ac5f95060ff67ff32352a1f2c3847e",
+      "prompt_version": 1,
+      "system_prompt_hash": "c97a8c65c6b8690d998153be885aa89fdaffb9cff281dc5ae59a609ff0fb94fd"
+    },
+    {
+      "task_id": "sts_v1",
+      "rows": 100,
+      "fingerprint": "sha256:6f3c67834a9dc24d2d2e4abf866217988f55aeb366bff95b8cda3213b1e66122",
+      "prompt_version": 1,
+      "system_prompt_hash": "c1e4aeea44231dbb5e1d13858f7c9cc69f27b420f6b8d05a69a614c0df75d3c0"
+    },
+    {
+      "task_id": "sentiment_v1",
+      "rows": 50,
+      "fingerprint": "sha256:a0fbacaf806acd285c690f4c59cdfca33b4e3dd7eca83ff81ffd67b6ff618427",
+      "prompt_version": 1,
+      "system_prompt_hash": "cb179e716e06dd162f0740a6cb05c923dd495f085138053485fd863d387fbf06"
+    },
+    {
+      "task_id": "intent_v1",
+      "rows": 50,
+      "fingerprint": "sha256:3009ea2fc2fd41ced3d386303929e0c4ad16580c0bff9f5a1e1156672aeec73b",
+      "prompt_version": 1,
+      "system_prompt_hash": "b3f0a8995f2a2fa985979c6dd194dfa984178b0fe13e28435a94b44b78368837"
+    }
+  ]
+}

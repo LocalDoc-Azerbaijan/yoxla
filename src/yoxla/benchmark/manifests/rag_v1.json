@@ -1,0 +1,21 @@
+{
+  "block": "rag",
+  "benchmark_version": "rag_v1",
+  "dataset_revision": null,
+  "tasks": [
+    {
+      "task_id": "rag_verification_v1",
+      "rows": 160,
+      "fingerprint": "sha256:153f8c0f876498bb4785c0fa56a395f70257474fb16722512bb801d3b8b3e53e",
+      "prompt_version": 1,
+      "system_prompt_hash": "c32d84556136cedd7ab2727db9a01721530b720d1b3be1156297c6f731b4d1e6"
+    },
+    {
+      "task_id": "rag_selection_v1",
+      "rows": 133,
+      "fingerprint": "sha256:24dd8093983e985142d5118373bdcb234a36307ec9972e0b64c23eb0ce135ab9",
+      "prompt_version": 1,
+      "system_prompt_hash": "1500d1efda0fc8b11b9052bbfdee59b3ceaedbe9b25ed7eeee26d9410bad09d8"
+    }
+  ]
+}

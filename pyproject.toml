@@ -1,0 +1,81 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "yoxla"
+version = "0.1.0"
+description = "Azerbaijani LLM evaluation framework and benchmark"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "LocalDoc" },
+]
+keywords = [
+    "azerbaijani",
+    "benchmark",
+    "evaluation",
+    "llm",
+    "nlp",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+]
+
+# Only what importing and running the benchmark needs. Providers are
+# extras: the OpenAI SDK is imported when a client is built, not when
+# the package loads, so `pip install yoxla` stays importable on its
+# own.
+dependencies = [
+    "pyyaml>=6.0",
+    "datasets>=2.19",
+]
+
+[project.urls]
+Homepage = "https://github.com/LocalDoc-Azerbaijan/yoxla"
+Repository = "https://github.com/LocalDoc-Azerbaijan/yoxla"
+Dataset = "https://huggingface.co/datasets/LocalDoc/YOXLA-Benchmark"
+Issues = "https://github.com/LocalDoc-Azerbaijan/yoxla/issues"
+
+[project.optional-dependencies]
+api = [
+    "openai>=1.0",
+]
+
+local = [
+    "torch",
+    "transformers",
+    "accelerate",
+]
+
+dev = [
+    "pytest",
+    "ruff",
+]
+
+[project.scripts]
+yoxla = "yoxla.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/yoxla"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/README.md",
+    "/LICENSE",
+    "/pyproject.toml",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
