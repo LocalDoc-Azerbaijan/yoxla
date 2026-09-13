@@ -54,6 +54,12 @@ class RunInfo:
 
     result_schema_version: int = RESULT_SCHEMA_VERSION
 
+    # How many requests were in flight at once. Part of the run's
+    # conditions rather than a detail: under load a provider answers
+    # 429 more often, and an example whose retries run out counts as a
+    # generation error, which lowers the score.
+    workers: int = 1
+
     tasks: list[TaskRunInfo] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:

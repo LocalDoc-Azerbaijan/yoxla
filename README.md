@@ -467,6 +467,34 @@ copy the passage, score 1.0.
 are what earlier runs were scored on, and keeping them visible is what
 makes the change in the headline number explainable.
 
+### Running in parallel
+
+A full run is 1443 requests and by default each waits for the last.
+`--workers` puts several in flight:
+
+```bash
+yoxla run --provider openrouter --model some/model --block all --workers 8
+```
+
+Requests are issued from a pool but **results are consumed in example
+order**, so `predictions.jsonl` reads the same whatever the schedule
+was, `rescore` still replays it, and an interrupted run still resumes
+from the last line on disk. On a synthetic 60-example run the speedup
+is close to linear — ×3.9 at four workers, ×9.7 at ten — and the score
+is unchanged.
+
+**The default stays 1 because the schedule can move the score.** Under
+load a provider answers 429 and times out more often; an example whose
+retries run out is recorded as a generation error, and that counts
+against the model. A model run on twenty threads can therefore score
+below the same model run on one, for a reason that has nothing to do
+with the model. The worker count is written into `run.json`, and the
+summary prints `generation errors` — check it is zero before comparing
+two runs.
+
+Local Transformers models gain nothing here: they serialize on the
+device.
+
 ### Resuming
 
 `predictions.jsonl` is flushed after every example. If a long API run

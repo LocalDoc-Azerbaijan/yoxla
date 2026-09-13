@@ -521,6 +521,7 @@ def command_run(
             validate=not args.no_validate,
             max_retries=args.max_retries,
             retry_backoff=args.retry_backoff,
+            workers=args.workers,
         )
 
     except KeyboardInterrupt:
@@ -895,6 +896,20 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Base seconds for exponential "
             "retry backoff"
+        ),
+    )
+
+    run_parser.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help=(
+            "Requests in flight at once. Defaults to 1. "
+            "Raising it shortens a run but is part of its "
+            "conditions: under load a provider answers 429 more "
+            "often, and an example whose retries run out counts "
+            "as a generation error. Check that the summary "
+            "reports none before comparing scores."
         ),
     )
 

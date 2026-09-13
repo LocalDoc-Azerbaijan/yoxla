@@ -1,4 +1,5 @@
 import json
+import time
 from dataclasses import replace
 
 import pytest
@@ -540,3 +541,153 @@ def test_only_transport_failures_are_retryable():
 
     assert not is_retryable(Bad())
     assert not is_retryable(ValueError("bad output"))
+
+
+GOLD_BY_PREMISE = {
+    row["premise"]: row["label"] for row in ROWS
+}
+
+
+class UnorderedModel(ModelAdapter):
+    """
+    Answers from the prompt rather than from a call counter, and
+    takes a different amount of time for each example.
+
+    A scripted model keyed on call order cannot test threading: the
+    order is what threading changes. The delays are reversed so that
+    the last example finishes first, which is the case that would
+    scramble the predictions file if results were consumed as they
+    complete.
+    """
+
+    def __init__(self, delays):
+        super().__init__(
+            model="unordered-model",
+            provider="test",
+        )
+
+        self.delays = delays
+
+    def generate(self, request):
+        prompt = request.messages[-1].content
+
+        premise = next(
+            value
+            for value in GOLD_BY_PREMISE
+            if value in prompt
+        )
+
+        time.sleep(self.delays[premise])
+
+        answer = GOLD_BY_PREMISE[premise]
+
+        return GenerationResponse(
+            text=answer,
+            raw_text=answer,
+            model=self.model,
+            provider=self.provider,
+            finish_reason="stop",
+            usage=TokenUsage(
+                input_tokens=10,
+                output_tokens=2,
+            ),
+            latency_ms=1.0,
+        )
+
+
+DELAYS = {
+    ROWS[0]["premise"]: 0.06,
+    ROWS[1]["premise"]: 0.03,
+    ROWS[2]["premise"]: 0.0,
+}
+
+
+def test_workers_do_not_change_what_a_run_produces(
+    local_rows, tmp_path
+):
+    """
+    Threads may shorten a run. They may not reorder its predictions
+    or move its score.
+    """
+
+    sequential = run_benchmark(
+        model=UnorderedModel(DELAYS),
+        tasks=[NLI],
+        output_dir=str(tmp_path),
+        run_id="sequential",
+    )
+
+    parallel = run_benchmark(
+        model=UnorderedModel(DELAYS),
+        tasks=[NLI],
+        output_dir=str(tmp_path),
+        run_id="parallel",
+        workers=3,
+    )
+
+    assert parallel["score"] == sequential["score"]
+    assert parallel["generation_errors"] == 0
+
+    one = read_predictions(tmp_path / "sequential")
+    many = read_predictions(tmp_path / "parallel")
+
+    assert [row["example_id"] for row in many] == [
+        row["example_id"] for row in one
+    ]
+
+    assert [row["example_id"] for row in many] == [
+        row["id"] for row in ROWS
+    ]
+
+    for left, right in zip(one, many):
+        assert left["parsed_prediction"] == (
+            right["parsed_prediction"]
+        )
+        assert left["metrics"] == right["metrics"]
+
+    run_info = json.loads(
+        (tmp_path / "parallel" / "run.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    # The schedule is part of the run's conditions, so it is recorded.
+    assert run_info["workers"] == 3
+
+
+def test_a_failing_example_does_not_take_the_others_with_it(
+    local_rows, tmp_path
+):
+    """
+    One provider failure is one example's result. With several
+    requests in flight, an exception escaping its own thread would
+    end the run.
+    """
+
+    class OneBadExample(UnorderedModel):
+        def generate(self, request):
+            if ROWS[1]["premise"] in request.messages[-1].content:
+                raise ValueError("provider said no")
+
+            return super().generate(request)
+
+    summary = run_benchmark(
+        model=OneBadExample(DELAYS),
+        tasks=[NLI],
+        output_dir=str(tmp_path),
+        run_id="one-bad",
+        workers=3,
+    )
+
+    assert summary["generation_errors"] == 1
+
+    rows = read_predictions(tmp_path / "one-bad")
+
+    assert [row["example_id"] for row in rows] == [
+        row["id"] for row in ROWS
+    ]
+
+    failed = rows[1]
+
+    assert failed["parse_error"] == "generation_error"
+    assert "provider said no" in failed["error"]

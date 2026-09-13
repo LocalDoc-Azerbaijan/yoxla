@@ -15,6 +15,7 @@ Two rules are enforced here:
 
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -318,6 +319,7 @@ def run_benchmark(
     validate: bool = True,
     max_retries: int = 4,
     retry_backoff: float = 2.0,
+    workers: int = 1,
 ) -> dict[str, Any]:
     run_id = run_id or build_run_id(
         model=model.model,
@@ -359,6 +361,7 @@ def run_benchmark(
         yoxla_version=__version__,
         model=model.model,
         provider=model.provider,
+        workers=workers,
         started_at=started_at,
     )
 
@@ -450,6 +453,7 @@ def run_benchmark(
                 completed=completed,
                 max_retries=max_retries,
                 retry_backoff=retry_backoff,
+                workers=workers,
             )
 
             generation_errors += errors
@@ -718,10 +722,13 @@ def _run_task(
     completed: dict[tuple[str, str], dict[str, Any]],
     max_retries: int,
     retry_backoff: float,
+    workers: int = 1,
 ) -> int:
     total = len(examples)
 
     generation_errors = 0
+
+    pending: list[tuple[int, BenchmarkExample]] = []
 
     for position, example in enumerate(examples, start=1):
         previous = completed.get(
@@ -741,6 +748,17 @@ def _run_task(
 
             continue
 
+        pending.append((position, example))
+
+    def ask(example: BenchmarkExample):
+        """
+        One request, and nothing else.
+
+        Raises nothing: a provider failure is this example's result,
+        not the run's, and with several threads in flight an
+        exception escaping here would take the others with it.
+        """
+
         rendered = render_prompt(task, example)
 
         request = GenerationRequest(
@@ -753,16 +771,6 @@ def _run_task(
             thinking=task.generation.thinking,
         )
 
-        print(
-            f"  [{position}/{total}] {example.id}",
-            end=" ... ",
-            flush=True,
-        )
-
-        error: str | None = None
-
-        response = None
-
         try:
             response = generate_with_retry(
                 model,
@@ -771,14 +779,33 @@ def _run_task(
                 backoff=retry_backoff,
             )
 
-        # Any provider failure is recorded as a result for this
-        # example; it must not abort the whole benchmark run.
+            return rendered, response, None
+
         except Exception as exception:  # noqa: BLE001
-            error = (
-                f"{type(exception).__name__}: {exception}"
+            return (
+                rendered,
+                None,
+                f"{type(exception).__name__}: {exception}",
             )
 
-            generation_errors += 1
+    def record(
+        position: int,
+        example: BenchmarkExample,
+        answered: tuple[Any, Any, str | None],
+    ) -> int:
+        """
+        Score one answer and write its line. Called in example order
+        on one thread, so the evaluator and the file see the run as
+        if it had been sequential.
+        """
+
+        rendered, response, error = answered
+
+        print(
+            f"  [{position}/{total}] {example.id}",
+            end=" ... ",
+            flush=True,
+        )
 
         if response is not None:
             prediction = parse_prediction(
@@ -847,6 +874,37 @@ def _run_task(
         )
 
         print(_status(prediction, error))
+
+        return 1 if error is not None else 0
+
+    # Answers are consumed in example order rather than as they
+    # finish. The pool runs ahead; each example is scored and written
+    # when its own turn comes, so the predictions file reads the same
+    # whatever the schedule was and a resumed run still picks up from
+    # the last line on disk.
+    if workers <= 1:
+        for position, example in pending:
+            generation_errors += record(
+                position, example, ask(example)
+            )
+
+    else:
+        with ThreadPoolExecutor(
+            max_workers=workers
+        ) as pool:
+            answers = [
+                (
+                    position,
+                    example,
+                    pool.submit(ask, example),
+                )
+                for position, example in pending
+            ]
+
+            for position, example, answer in answers:
+                generation_errors += record(
+                    position, example, answer.result()
+                )
 
     return generation_errors
 
